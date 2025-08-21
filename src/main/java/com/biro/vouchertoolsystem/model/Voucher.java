@@ -17,25 +17,30 @@ public class Voucher {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "batch_id", nullable = false)
     private VoucherBatch batch;
+
+    @ManyToOne
+    @JoinColumn(name = "order_id")
+    private Order order;
 
     @Column(name = "code", nullable = false)
     private String code;
 
     @Column(name = "status")
+    @Enumerated(EnumType.STRING)
     private VoucherStatus voucherStatus;
 
     @Column(name = "expiry_date")
     private Date expiryDate;
 
     @CreatedDate
-    @Column(name = "created_at")
+    @Column(name = "created_at", insertable = false, updatable = false)
     private Date createdAt;
 
     @LastModifiedDate
-    @Column(name = "updated_at")
+    @Column(name = "updated_at" , insertable = false)
     private Date updatedAt;
 
 }

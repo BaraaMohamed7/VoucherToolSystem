@@ -1,18 +1,38 @@
 package com.biro.vouchertoolsystem.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
 
+import java.util.Date;
+import java.util.List;
+
+@Getter
+@Setter
 @Entity
+@Table(name = "orders")
 public class Order {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    @Column(name = "status")
+    private OrderStatus orderStatus = OrderStatus.Paid;
 
-    public Long getId() {
-        return id;
-    }
+    @OneToMany(mappedBy= "order")
+    private List<Voucher> vouchers;
+
+    @CreatedDate
+    @Column(name = "created_at", nullable = false, updatable = false, insertable = false)
+    private Date createdAt;
+
+    @LastModifiedDate
+    @Column(name = "updated_at", nullable = false, insertable = false)
+    private Date updatedAt;
+
+    @Column(name = "deleted_at")
+    private Date deletedAt;
+
 }
