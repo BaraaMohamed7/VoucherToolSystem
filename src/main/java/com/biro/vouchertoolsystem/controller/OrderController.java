@@ -1,18 +1,17 @@
 package com.biro.vouchertoolsystem.controller;
 
 import com.biro.vouchertoolsystem.Dtos.Request.OrderRequestDTO;
+import com.biro.vouchertoolsystem.Dtos.Response.OrderResponseDTO;
 import com.biro.vouchertoolsystem.Dtos.Response.OrderVouchersResponseDTO;
+import com.biro.vouchertoolsystem.model.OrderStatus;
 import com.biro.vouchertoolsystem.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/order")
+@RequestMapping("/api/orders")
 public class OrderController {
    private final OrderService  orderService;
 
@@ -21,8 +20,23 @@ public class OrderController {
        this.orderService = orderService;
    }
 
-   @PostMapping("/new")
+   @PostMapping
    public List<OrderVouchersResponseDTO> createNewOrder(@RequestBody OrderRequestDTO orderRequestDTO) throws Exception {
        return orderService.newOrder(orderRequestDTO.getProductId(), orderRequestDTO.getQuantity());
    }
+
+   @GetMapping
+   public List<OrderResponseDTO> getAll() {
+       return orderService.findAll();
+   }
+
+   @GetMapping("/{orderId}")
+    public OrderResponseDTO getOrder(@PathVariable("orderId") Long orderId) throws Exception {
+       return orderService.findById(orderId);
+   }
+
+    @PatchMapping("/{orderId}")
+    public OrderResponseDTO updateOrder(@PathVariable("orderId") Long orderId, @RequestBody OrderStatus orderStatus) throws Exception {
+       return orderService.updateOrder(orderId, orderStatus);
+    }
 }

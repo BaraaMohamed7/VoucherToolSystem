@@ -1,5 +1,6 @@
 package com.biro.vouchertoolsystem.service;
 
+import com.biro.vouchertoolsystem.Dtos.Response.OrderResponseDTO;
 import com.biro.vouchertoolsystem.Dtos.Response.OrderVouchersResponseDTO;
 import com.biro.vouchertoolsystem.model.Order;
 import com.biro.vouchertoolsystem.model.OrderStatus;
@@ -7,6 +8,7 @@ import com.biro.vouchertoolsystem.model.VoucherStatus;
 import com.biro.vouchertoolsystem.repository.OrderRepository;
 import com.biro.vouchertoolsystem.repository.VoucherBatchRepository;
 import com.biro.vouchertoolsystem.repository.VoucherRepository;
+import org.apache.coyote.BadRequestException;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -14,6 +16,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class OrderService {
@@ -43,5 +46,32 @@ public class OrderService {
         Order order = orderRepository.save(emptyOrder);
         voucherRepository.updateVouchersStatusAndOrder(availableVouchersByBatchId, order.getId(), VoucherStatus.ASSIGNED);
         return voucherRepository.findVouchersByOrderId(order.getId()).stream().map(voucher->modelMapper.map(voucher, OrderVouchersResponseDTO.class)).toList();
+    }
+
+    public OrderResponseDTO findById(Long orderId) throws Exception {
+        Optional<Order> orderOptional= orderRepository.findById(orderId);
+        if (orderOptional.isPresent()) {
+        return  modelMapper.map(orderOptional.get(), OrderResponseDTO.class);
+        } else {
+            throw new BadRequestException("Order Not Found");
+        }
+    }
+
+    public List<OrderResponseDTO> findAll() {
+        List<Order> orders = orderRepository.findAll();
+        return orders.stream().map(order->modelMapper.map(order, OrderResponseDTO.class)).toList();
+    }
+
+    public OrderResponseDTO updateOrder(Long orderId, OrderStatus orderStatus) throws Exception {
+        Optional<Order> orderOptional= orderRepository.findById(orderId);
+        if (orderOptional.isPresent()) {
+            Order order = orderOptional.get();
+            if(orderStatus != null) {
+                order.setOrderStatus(orderStatus);
+            }
+            return  modelMapper.map(orderRepository.save(order), OrderResponseDTO.class);
+        } else  {
+            throw new BadRequestException("Order Not Found");
+        }
     }
 }

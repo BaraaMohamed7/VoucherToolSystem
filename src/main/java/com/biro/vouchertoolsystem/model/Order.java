@@ -18,6 +18,8 @@ public class Order {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+
+//    @Enumerated(EnumType.STRING)
     @Column(name = "status")
     private OrderStatus orderStatus = OrderStatus.Paid;
 
@@ -31,8 +33,4 @@ public class Order {
     @LastModifiedDate
     @Column(name = "updated_at", nullable = false, insertable = false)
     private Date updatedAt;
-
-    @Column(name = "deleted_at")
-    private Date deletedAt;
-
 }

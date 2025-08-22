@@ -18,22 +18,23 @@ public class OfferController {
         this.offerService = offerService;
     }
 
-    @GetMapping("/all")
+    @GetMapping
     List<OfferResponseDTO> getAllOffers(){
         return offerService.getAllOffers();
     }
 
-    @GetMapping("/category")
-    List<OfferResponseDTO> getOffersOfCategory(@RequestParam Long categoryId){
+    @GetMapping("/{offerId}")
+    OfferResponseDTO getOfferById(@PathVariable Long offerId){
+        return offerService.findOfferById(offerId);
+    }
+
+    @GetMapping("/category/{categoryId}")
+    List<OfferResponseDTO> getOffersOfCategory(@PathVariable Long categoryId){
         return offerService.findAllOffersByCategory(categoryId);
     }
 
-    @GetMapping("/{offerId}")
-    OfferResponseDTO getOfferById(@PathVariable Long offerId){
-    return offerService.findOfferById(offerId);
-    }
 
-    @PostMapping("/new")
+    @PostMapping
     OfferResponseDTO createOffer(@RequestBody OfferRequestDTO offerRequestDTO){
         try {
             return offerService.createOffer(offerRequestDTO);
@@ -43,4 +44,13 @@ public class OfferController {
         return null;
     }
 
+    @PatchMapping("/{offerId}")
+    public  OfferResponseDTO updateOffer(@PathVariable Long offerId, @RequestBody OfferRequestDTO offerRequestDTO) throws BadRequestException {
+        return offerService.updateOffer(offerId, offerRequestDTO);
+    }
+
+    @DeleteMapping("/{offerId}")
+    public String deleteOfferById(@PathVariable Long offerId){
+        return offerService.deleteOffer(offerId);
+    }
 }

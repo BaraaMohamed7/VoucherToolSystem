@@ -19,18 +19,30 @@ public class CategoryController {
         this.categoryService = categoryService;
     }
 
-    @GetMapping("/{categoryId}")
-    public CategoryResponseDTO findCategoryById(@PathVariable("categoryId") Long categoryId) {
-        return categoryService.findById(categoryId);
-    }
-
     @GetMapping
     public List<CategoryResponseDTO> findAllCategory() {
         return categoryService.findAll();
     }
 
-    @PostMapping("/new")
+
+    @GetMapping("/{categoryId}")
+    public CategoryResponseDTO findCategoryById(@PathVariable("categoryId") Long categoryId) {
+        return categoryService.findById(categoryId);
+    }
+
+
+    @PostMapping
     public CategoryResponseDTO create(@RequestBody CategoryRequestDTO  categoryRequestDTO) {
         return categoryService.create(categoryRequestDTO);
+    }
+
+    @PatchMapping("/{categoryId}")
+    public CategoryResponseDTO updateCategory(@PathVariable("categoryId") Long categoryId, @RequestBody CategoryRequestDTO  categoryRequestDTO) {
+        return categoryService.updateCategory(categoryId, categoryRequestDTO);
+    }
+
+    @DeleteMapping("/{categoryId}")
+    public String deleteCategoryById(@PathVariable("categoryId") Long id) {
+        return categoryService.deleteById(id);
     }
 }

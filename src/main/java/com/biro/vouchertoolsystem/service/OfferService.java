@@ -14,8 +14,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class OfferService {
@@ -33,7 +35,9 @@ public class OfferService {
     }
 
     public List<OfferResponseDTO> getAllOffers(){
-        return offerRepository.findAll().stream().map(offer-> modelMapper.map(offer, OfferResponseDTO.class)).toList();
+        return offerRepository.findAllByDeletedAtIs(null).stream()
+                .map(offer-> modelMapper.map(offer, OfferResponseDTO.class))
+                .toList();
     }
 
     public List<OfferResponseDTO> findAllOffersByCategory(@Param("categoryId")  Long categoryId) {
@@ -42,23 +46,89 @@ public class OfferService {
     }
 
     public OfferResponseDTO findOfferById(@Param("offerId") Long offerId) {
-        Offer offer = offerRepository.findById(offerId).get();
+        Offer offer = offerRepository.findByIdAndDeletedAtIs(offerId, null);
         return modelMapper.map(offer, OfferResponseDTO.class);
     }
 
     public OfferResponseDTO createOffer(OfferRequestDTO offerRequestDTO) throws BadRequestException {
         Offer offer = modelMapper.map(offerRequestDTO, Offer.class);
+
         List<Category> categories = categoryRepository.findAllById(offerRequestDTO.getCategories());
+
         if(categories.size() != offerRequestDTO.getCategories().size()) {
             throw new BadRequestException(offerRequestDTO.getCategories().size() - categories.size() + "Categories are invalid");
         }
-        if (merchantRepository.findById(offerRequestDTO.getMerchantId()).isEmpty()) {
+
+        if (merchantRepository.findByIdAndDeletedAtIsNullAndIsActiveIsTrue(offerRequestDTO.getMerchantId()).isEmpty()) {
             throw new BadRequestException(offerRequestDTO.getMerchantId() + "Merchant not found");
         }
+
         Merchant merchant = merchantRepository.findById(offerRequestDTO.getMerchantId()).get();
         offer.setOfferCategories(new HashSet<>(categories));
         offer.setMerchant(merchant);
         Offer savedOffer = offerRepository.save(offer);
         return modelMapper.map(savedOffer, OfferResponseDTO.class);
+    }
+
+    public String deleteOffer(Long offerId) {
+        if(offerRepository.findById(offerId).isPresent()) {
+            Offer offer = offerRepository.findById(offerId).get();
+            offer.setDeletedAt(new Date());
+           offerRepository.save(offer);
+           return "deleted successfully";
+        }
+        return "offer not found to be deleted";
+    }
+
+    public OfferResponseDTO updateOffer(Long id,OfferRequestDTO offerRequestDTO) throws BadRequestException {
+        Optional<Offer> existingOffer = Optional.ofNullable(offerRepository.findByIdAndDeletedAtIs(id, null));
+        Offer offer = null;
+        if(existingOffer.isPresent()) {
+            offer = existingOffer.get();
+            if(offerRequestDTO.getNameArabic() != null){
+                offer.setNameArabic(offerRequestDTO.getNameArabic());
+            }
+            if(offerRequestDTO.getDescriptionArabic() != null){
+                offer.setDescriptionArabic(offerRequestDTO.getDescriptionArabic());
+            }
+
+            if (offerRequestDTO.getNameEnglish() != null){
+                offer.setNameEnglish(offerRequestDTO.getNameEnglish());
+            }
+            if (offerRequestDTO.getDescriptionEnglish() != null){
+                offer.setDescriptionEnglish(offerRequestDTO.getDescriptionEnglish());
+            }
+
+            if (offerRequestDTO.getImageUrl()  != null){
+                offer.setImageUrl(offerRequestDTO.getImageUrl());
+            }
+
+            if (offerRequestDTO.getStartDate() != null){
+                offer.setStartDate(offerRequestDTO.getStartDate());
+            }
+
+            if (offerRequestDTO.getEndDate() != null){
+                offer.setEndDate(offerRequestDTO.getEndDate());
+            }
+
+            if(offerRequestDTO.getMerchantId() != null){
+                if (merchantRepository.findByIdAndDeletedAtIsNullAndIsActiveIsTrue(offerRequestDTO.getMerchantId()).isEmpty()) {
+                    throw new BadRequestException(offerRequestDTO.getMerchantId() + "Merchant not found");
+                }
+                offer.setMerchant(merchantRepository.findById(offerRequestDTO.getMerchantId()).get());
+            }
+
+            if(offerRequestDTO.getCategories() != null){
+                List<Category> categories = categoryRepository.findAllByDeletedAtIsNullAndIsActiveIsTrueAndIdIn(offerRequestDTO.getCategories());
+
+                if(categories.size() != offerRequestDTO.getCategories().size()) {
+                    throw new BadRequestException(offerRequestDTO.getCategories().size() - categories.size() + "Categories are invalid");
+                }
+                offer.setOfferCategories(new HashSet<>(categories));
+            }
+            return modelMapper.map(offerRepository.save(offer),  OfferResponseDTO.class);
+        } else {
+            throw new BadRequestException("Offer not found");
+        }
     }
 }
