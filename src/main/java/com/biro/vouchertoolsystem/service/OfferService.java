@@ -45,8 +45,12 @@ public class OfferService {
         return offers.stream().map(offer -> modelMapper.map(offer, OfferResponseDTO.class)).toList();
     }
 
-    public OfferResponseDTO findOfferById(@Param("offerId") Long offerId) {
+    public OfferResponseDTO findOfferById(@Param("offerId") Long offerId) throws BadRequestException {
+
         Offer offer = offerRepository.findByIdAndDeletedAtIs(offerId, null);
+        if (offer == null) {
+            throw new BadRequestException("Offer Not Found");
+        }
         return modelMapper.map(offer, OfferResponseDTO.class);
     }
 

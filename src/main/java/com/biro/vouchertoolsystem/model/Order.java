@@ -26,6 +26,10 @@ public class Order {
     @OneToMany(mappedBy= "order")
     private List<Voucher> vouchers;
 
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
+
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false, insertable = false)
     private Date createdAt;

@@ -1,11 +1,11 @@
 package com.biro.vouchertoolsystem.service;
 
+import com.biro.vouchertoolsystem.Dtos.Request.OrderRequestDTO;
 import com.biro.vouchertoolsystem.Dtos.Response.OrderResponseDTO;
 import com.biro.vouchertoolsystem.Dtos.Response.OrderVouchersResponseDTO;
-import com.biro.vouchertoolsystem.model.Order;
-import com.biro.vouchertoolsystem.model.OrderStatus;
-import com.biro.vouchertoolsystem.model.VoucherStatus;
+import com.biro.vouchertoolsystem.model.*;
 import com.biro.vouchertoolsystem.repository.OrderRepository;
+import com.biro.vouchertoolsystem.repository.UserRepository;
 import com.biro.vouchertoolsystem.repository.VoucherBatchRepository;
 import com.biro.vouchertoolsystem.repository.VoucherRepository;
 import org.apache.coyote.BadRequestException;
@@ -15,6 +15,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,27 +24,32 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final VoucherRepository voucherRepository;
     private final VoucherBatchRepository voucherBatchRepository;
+    private final UserRepository userRepository;
     private final ModelMapper modelMapper;
 
     @Autowired
-    public OrderService(OrderRepository orderRepository, VoucherRepository voucherRepository, VoucherBatchRepository voucherBatchRepository, ModelMapper modelMapper) {
+    public OrderService(OrderRepository orderRepository, VoucherRepository voucherRepository, VoucherBatchRepository voucherBatchRepository, UserRepository userRepository, ModelMapper modelMapper) {
         this.orderRepository = orderRepository;
         this.voucherRepository = voucherRepository;
         this.voucherBatchRepository = voucherBatchRepository;
+        this.userRepository = userRepository;
         this.modelMapper = modelMapper;
     }
 
-    public List<OrderVouchersResponseDTO> newOrder(Long productId, Integer quantity) throws Exception {
-        Long batchId = voucherBatchRepository.findVoucherBatchByProductId(productId);
-        Pageable limit = PageRequest.of(0, quantity);
-        List<Long> availableVouchersByBatchId = voucherRepository.findAvailableVouchersByBatchId(batchId, VoucherStatus.AVAILABLE, limit);
+    public List<OrderVouchersResponseDTO> newOrder(OrderRequestDTO requestDTO) throws Exception {
+        VoucherBatch batch = voucherBatchRepository.findVoucherBatchByProductId(requestDTO.getProductId());
+        Pageable limit = PageRequest.of(0, requestDTO.getQuantity());
+        List<Long> availableVouchersByBatchId = voucherRepository.findAvailableVouchersByBatchId(batch.getId(), VoucherStatus.AVAILABLE, limit);
         if(availableVouchersByBatchId.isEmpty()) {
             throw new Exception("No Available Vouchers");
         }
 
         Order emptyOrder = new Order();
         emptyOrder.setOrderStatus(OrderStatus.Paid);
+        emptyOrder.setUser(userRepository.findById(requestDTO.getUserId()).get());
         Order order = orderRepository.save(emptyOrder);
+        batch.setTotalCount(batch.getTotalCount()-requestDTO.getQuantity());
+        voucherBatchRepository.save(batch);
         voucherRepository.updateVouchersStatusAndOrder(availableVouchersByBatchId, order.getId(), VoucherStatus.ASSIGNED);
         return voucherRepository.findVouchersByOrderId(order.getId()).stream().map(voucher->modelMapper.map(voucher, OrderVouchersResponseDTO.class)).toList();
     }
@@ -62,16 +68,20 @@ public class OrderService {
         return orders.stream().map(order->modelMapper.map(order, OrderResponseDTO.class)).toList();
     }
 
-    public OrderResponseDTO updateOrder(Long orderId, OrderStatus orderStatus) throws Exception {
-        Optional<Order> orderOptional= orderRepository.findById(orderId);
-        if (orderOptional.isPresent()) {
-            Order order = orderOptional.get();
-            if(orderStatus != null) {
-                order.setOrderStatus(orderStatus);
-            }
-            return  modelMapper.map(orderRepository.save(order), OrderResponseDTO.class);
-        } else  {
-            throw new BadRequestException("Order Not Found");
+    public String refundOrder(Long userId, Long orderId) throws Exception {
+        Optional<Order> orderOptional = Optional.ofNullable(orderRepository.findById(orderId).orElseThrow((() -> new BadRequestException("Order Not Found"))));
+        List<Voucher> orderVouchers = voucherRepository.findVouchersByOrderId(orderId);
+        VoucherBatch batch = voucherBatchRepository.getVoucherBatchById(orderVouchers.get(0).getBatch().getId());
+        for (Voucher voucher : orderVouchers) {
+            voucher.setVoucherStatus(VoucherStatus.AVAILABLE);
+            voucherRepository.save(voucher);
+            batch.setTotalCount(batch.getTotalCount() + 1);
         }
+        voucherBatchRepository.save(batch);
+        Order order=  orderOptional.get();
+        order.setOrderStatus(OrderStatus.Refunded);
+        order.setUpdatedAt(new Date());
+        orderRepository.save(order);
+        return "Refund Successfully";
     }
 }

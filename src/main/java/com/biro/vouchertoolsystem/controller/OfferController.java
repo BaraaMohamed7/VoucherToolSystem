@@ -24,7 +24,7 @@ public class OfferController {
     }
 
     @GetMapping("/{offerId}")
-    OfferResponseDTO getOfferById(@PathVariable Long offerId){
+    OfferResponseDTO getOfferById(@PathVariable Long offerId) throws BadRequestException {
         return offerService.findOfferById(offerId);
     }
 

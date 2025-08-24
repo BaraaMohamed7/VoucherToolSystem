@@ -9,5 +9,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface VoucherBatchRepository extends JpaRepository<VoucherBatch,Long> {
     @Query("select b.id from VoucherBatch b where b.product.id = :productId")
-    Long findVoucherBatchByProductId(@Param("productId") Long productId);
+    VoucherBatch findVoucherBatchByProductId(@Param("productId") Long productId);
+
+    VoucherBatch getVoucherBatchById(Long id);
 }

@@ -22,7 +22,7 @@ public class OrderController {
 
    @PostMapping
    public List<OrderVouchersResponseDTO> createNewOrder(@RequestBody OrderRequestDTO orderRequestDTO) throws Exception {
-       return orderService.newOrder(orderRequestDTO.getProductId(), orderRequestDTO.getQuantity());
+       return orderService.newOrder(orderRequestDTO);
    }
 
    @GetMapping
