@@ -1,5 +1,6 @@
 package com.biro.vouchertoolsystem.controller;
 
+import com.biro.vouchertoolsystem.Dtos.Request.OrderRefundDTO;
 import com.biro.vouchertoolsystem.Dtos.Request.OrderRequestDTO;
 import com.biro.vouchertoolsystem.Dtos.Response.OrderResponseDTO;
 import com.biro.vouchertoolsystem.Dtos.Response.OrderVouchersResponseDTO;
@@ -25,6 +26,11 @@ public class OrderController {
        return orderService.newOrder(orderRequestDTO);
    }
 
+   @PostMapping("/refund")
+   public String refundOrder(@RequestBody OrderRefundDTO orderRefundDTO) throws Exception {
+       return orderService.refundOrder(orderRefundDTO);
+   }
+
    @GetMapping
    public List<OrderResponseDTO> getAll() {
        return orderService.findAll();
@@ -34,9 +40,4 @@ public class OrderController {
     public OrderResponseDTO getOrder(@PathVariable("orderId") Long orderId) throws Exception {
        return orderService.findById(orderId);
    }
-
-    @PatchMapping("/{orderId}")
-    public OrderResponseDTO updateOrder(@PathVariable("orderId") Long orderId, @RequestBody OrderStatus orderStatus) throws Exception {
-       return orderService.updateOrder(orderId, orderStatus);
-    }
 }

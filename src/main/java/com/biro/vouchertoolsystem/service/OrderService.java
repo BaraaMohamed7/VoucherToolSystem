@@ -1,5 +1,6 @@
 package com.biro.vouchertoolsystem.service;
 
+import com.biro.vouchertoolsystem.Dtos.Request.OrderRefundDTO;
 import com.biro.vouchertoolsystem.Dtos.Request.OrderRequestDTO;
 import com.biro.vouchertoolsystem.Dtos.Response.OrderResponseDTO;
 import com.biro.vouchertoolsystem.Dtos.Response.OrderVouchersResponseDTO;
@@ -68,12 +69,12 @@ public class OrderService {
         return orders.stream().map(order->modelMapper.map(order, OrderResponseDTO.class)).toList();
     }
 
-    public String refundOrder(Long userId, Long orderId) throws Exception {
-        Optional<Order> orderOptional = Optional.ofNullable(orderRepository.findById(orderId).orElseThrow((() -> new BadRequestException("Order Not Found"))));
-        List<Voucher> orderVouchers = voucherRepository.findVouchersByOrderId(orderId);
+    public String refundOrder(OrderRefundDTO orderRefundDTO) throws Exception {
+        Optional<Order> orderOptional = Optional.ofNullable(orderRepository.findById(orderRefundDTO.getOrderId()).orElseThrow((() -> new BadRequestException("Order Not Found"))));
+        List<Voucher> orderVouchers = voucherRepository.findVouchersByOrderId(orderRefundDTO.getOrderId());
         VoucherBatch batch = voucherBatchRepository.getVoucherBatchById(orderVouchers.get(0).getBatch().getId());
         for (Voucher voucher : orderVouchers) {
-            voucher.setVoucherStatus(VoucherStatus.AVAILABLE);
+            voucher.setVoucherStatus(VoucherStatus.REFUNDED);
             voucherRepository.save(voucher);
             batch.setTotalCount(batch.getTotalCount() + 1);
         }
