@@ -3,16 +3,13 @@ package com.biro.vouchertoolsystem.util;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 @Component
-@RequiredArgsConstructor
 public class DataScrubber {
     private final String MASK = "***";
     private final ObjectMapper objectMapper;

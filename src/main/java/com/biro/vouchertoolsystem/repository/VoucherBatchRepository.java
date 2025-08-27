@@ -6,10 +6,12 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 public interface VoucherBatchRepository extends JpaRepository<VoucherBatch,Long> {
     @Query("select b.id from VoucherBatch b where b.product.id = :productId")
-    VoucherBatch findVoucherBatchByProductId(@Param("productId") Long productId);
+    Optional<VoucherBatch> findVoucherBatchByProductId(@Param("productId") Long productId);
 
     VoucherBatch getVoucherBatchById(Long id);
 }

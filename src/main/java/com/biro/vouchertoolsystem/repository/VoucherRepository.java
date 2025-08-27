@@ -33,5 +33,5 @@ public interface VoucherRepository extends JpaRepository<Voucher, Long> {
 
 
     @Query("select v from Voucher v where v.order.id = :orderId")
-    List<Voucher> findVouchersByOrderId(@Param("orderId") Long orderId);
+    List<Long> findVouchersByOrderId(@Param("orderId") Long orderId);
 }

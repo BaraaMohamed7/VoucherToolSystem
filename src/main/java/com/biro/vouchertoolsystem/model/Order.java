@@ -19,9 +19,9 @@ public class Order {
     private Long id;
 
 
-//    @Enumerated(EnumType.STRING)
+    @Enumerated(EnumType.STRING)
     @Column(name = "status")
-    private OrderStatus orderStatus = OrderStatus.Paid;
+    private OrderStatus orderStatus = OrderStatus.PENDING;
 
     @OneToMany(mappedBy= "order")
     private List<Voucher> vouchers;
@@ -29,6 +29,9 @@ public class Order {
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
+
+    @Column(name = "amount")
+    private Double amount;
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false, insertable = false)
