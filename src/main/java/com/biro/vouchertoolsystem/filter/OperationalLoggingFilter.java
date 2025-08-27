@@ -6,6 +6,7 @@ import com.biro.vouchertoolsystem.model.UserPrincipal;
 import com.biro.vouchertoolsystem.repository.OpsLogRepository;
 import com.biro.vouchertoolsystem.repository.UserRepository;
 import com.biro.vouchertoolsystem.service.JWTService;
+import com.biro.vouchertoolsystem.util.DataScrubber;
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -33,9 +34,9 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class OperationalLoggingFilter extends OncePerRequestFilter {
 
-    private final UserRepository userRepository;
     private final JWTService jwtService;
     private final OpsLogRepository opsLogRepository;
+    private final DataScrubber scrubber;
 
     @Override
     public void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws IOException, ServletException {
@@ -52,29 +53,20 @@ public class OperationalLoggingFilter extends OncePerRequestFilter {
         try {
             filterChain.doFilter(requestWrapper, responseWrapper);
 
-            String authorizationHeader = request.getHeader("Authorization");
-            String token = null;
-            Long userId = null;
-            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-                token = authorizationHeader.substring(7);
-                userId = jwtService.extractUserId(token);
-            }
-
             if ("POST".equals(request.getMethod()) || "PATCH".equals(request.getMethod())) {
                 byte[] requestContent = requestWrapper.getContentAsByteArray();
                 if (requestContent.length > 0) {
                     String requestBody = new String(requestContent, StandardCharsets.UTF_8);
                     requestBody = requestBody.replaceAll("\"password\"\\s*:\\s*\"[^\"]*\"", "\"password\":\"***\"");
-                    operationLog.setRequest(requestBody);
+                    operationLog.setRequest(scrubber.scrub(requestBody));
 
                 }
-
             }
 
             byte[] responseContent = responseWrapper.getContentAsByteArray();
             if (responseContent.length > 0) {
             String responseBody = new String(responseContent, StandardCharsets.UTF_8);
-            operationLog.setResponse(responseBody);
+            operationLog.setResponse(scrubber.scrub(responseBody));
             }
             responseWrapper.copyBodyToResponse();
 
